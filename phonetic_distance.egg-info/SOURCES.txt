@@ -1,0 +1,10 @@
+LICENSE
+README.md
+pyproject.toml
+phonetic_distance/__init__.py
+phonetic_distance/core.py
+phonetic_distance.egg-info/PKG-INFO
+phonetic_distance.egg-info/SOURCES.txt
+phonetic_distance.egg-info/dependency_links.txt
+phonetic_distance.egg-info/top_level.txt
+tests/test_similarity.py
