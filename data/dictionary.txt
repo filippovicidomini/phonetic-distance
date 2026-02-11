@@ -1,0 +1,7 @@
+# Dictionary file: una forma per riga. Varianti multiple possono essere separate da '/'.
+# Esempi:
+ciao/cià
+gatto
+pane/pàn
+pane
+pàn

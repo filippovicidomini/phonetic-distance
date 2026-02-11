@@ -1,0 +1,2 @@
+# Nessuna dipendenza esterna richiesta (solo standard library)
+python>=3.8
