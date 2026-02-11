@@ -1,43 +1,281 @@
-phonetic-distance
-=================
+# Phonetic Distance
 
-Libreria Python per una distanza di Levenshtein fonologica pesata, pensata per forme dialettali.
+[![Python Version](https://img.shields.io/badge/python-3.8+-blue.svg)](https://python.org)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-Questa repository contiene una versione avanzata della distanza di Levenshtein (file `phonetic_distance.py`, wrapper di `weighted_distance.py`) che tiene conto di caratteristiche fonologiche di basi e diacritici, tokenizza in NFD e fornisce similarità normalizzate per coppie di forme o per celle con varianti separate da `/`.
+**Una libreria Python avanzata per il calcolo di distanze fonetiche pesate, specificamente progettata per l'analisi di forme dialettali e variazioni linguistiche.**
 
-Caratteristiche principali
-- Tokenizzazione Unicode NFD con gestione di basi multi-carattere e diacritici.
-- Costi di sostituzione basati su feature (vocale/consonante, luogo, modo, voice, ecc.).
-- Penalità leggere per differenze diacritiche.
-- Funzioni pubbliche semplici: `tokenize_segments`, `weighted_levenshtein`, `phon_similarity_normalized`, `concept_similarity_normalized`.
+## 📖 Panoramica
 
-Installazione
-------------
+Questo progetto implementa una versione avanzata dell'algoritmo di distanza di Levenshtein che tiene conto delle caratteristiche fonologiche dei suoni. A differenza delle distanze tradizionali basate sui caratteri, questa libreria:
 
-Questo progetto non richiede dipendenze esterne: usa solo la libreria standard Python (3.8+). Clona la repo e usa direttamente `phonetic_distance.py`.
+- **Analizza le caratteristiche fonetiche** (vocale/consonante, modo, luogo di articolazione, ecc.)
+- **Gestisce i diacritici** con tokenizzazione Unicode NFD
+- **Supporta varianti multiple** separate da `/` in una singola cella
+- **Fornisce similarità normalizzate** tra 0 e 1
+- **È ottimizzata per forme dialettali** e trascrizioni fonetiche
 
-Esempio rapido:
+### 🎯 Caso d'uso tipico
+Quando si confrontano forme dialettali come `"gatto"` vs `"gàtto"`, una distanza di Levenshtein tradizionale le considererebbe molto diverse. Questa libreria riconosce che la differenza è solo un accento e assegna una similarità molto alta (0.98).
+
+## 🚀 Installazione rapida
+
+Questo progetto non richiede dipendenze esterne e funziona con Python 3.8+:
 
 ```bash
-git clone https://github.com/<tuo-utente>/phonetic-distance.git
+git clone https://github.com/filippovicidomini/phonetic-distance.git
 cd phonetic-distance
-python3 -c "from phonetic_distance import phon_similarity_normalized; print(phon_similarity_normalized('k a','kâ'))"
+python3 -c "from phonetic_distance import phon_similarity_normalized; print(phon_similarity_normalized('gatto','gàtto'))"
+# Output: 0.98
 ```
 
-Esempio d'uso
-------------
-Vedi `examples/usage.py` per un esempio minimo di utilizzo.
+## 📚 API Reference
 
-Estendere il dizionario
------------------------
-- La cartella `data/` contiene `dictionary.txt`, un semplice elenco line-by-line di forme/varianti.
-- Lo script `scripts/update_dictionary.py` fornisce una CLI minima per aggiungere forme normalizzate al dizionario evitando duplicati.
-- In futuro `dictionary.txt` può essere sostituito da CSV/TSV o database leggero; gli script sono progettati per essere facilmente adattabili.
+### Funzioni principali
 
-Contribuire
-----------
-- Segnala bug o richieste via Issues. Per aggiungere nuove basi fonetiche, modifica `BASE_FEATS` in `weighted_distance.py` (implementazione) e aggiorna `MULTI_BASES` (in forma NFD).
+#### `tokenize_segments(text: str) -> list[TokenType]`
+Converte una stringa in token fonetici usando normalizzazione NFD.
 
-Licenza
--------
-MIT (file `LICENSE`).
+```python
+from phonetic_distance import tokenize_segments
+
+# Separa base e diacritici
+tokens = tokenize_segments('gàtto')
+print(tokens)
+# [('g', frozenset()), ('a', frozenset({'̀'})), ('t', frozenset()), ('t', frozenset()), ('o', frozenset())]
+```
+
+#### `weighted_levenshtein(seq1, seq2, diac_w=0.1) -> float`
+Calcola la distanza di Levenshtein pesata tra due sequenze di token.
+
+```python
+from phonetic_distance import weighted_levenshtein, tokenize_segments
+
+tokens1 = tokenize_segments('casa')
+tokens2 = tokenize_segments('kasa')
+distance = weighted_levenshtein(tokens1, tokens2)
+print(f"Distanza: {distance}")
+```
+
+#### `phon_similarity_normalized(form1: str, form2: str, **kwargs) -> float`
+Calcola la similarità fonologica normalizzata (0-1) tra due forme.
+
+```python
+from phonetic_distance import phon_similarity_normalized
+
+# Confronto con diacritico
+sim1 = phon_similarity_normalized('gatto', 'gàtto')
+print(f"gatto vs gàtto: {sim1}")  # 0.98
+
+# Confronto foneticamente simile
+sim2 = phon_similarity_normalized('casa', 'kasa') 
+print(f"casa vs kasa: {sim2}")   # Alta similarità
+
+# Confronto molto diverso
+sim3 = phon_similarity_normalized('gatto', 'mare')
+print(f"gatto vs mare: {sim3}")  # Bassa similarità
+```
+
+#### `concept_similarity_normalized(cell_a: str, cell_b: str, **kwargs) -> float`
+Gestisce celle con varianti multiple separate da `/` e restituisce la massima similarità.
+
+```python
+from phonetic_distance import concept_similarity_normalized
+
+# Varianti multiple
+cell1 = "pane/pàn"
+cell2 = "pan/pané" 
+sim = concept_similarity_normalized(cell1, cell2)
+print(f"Similarità concettuale: {sim}")
+```
+
+### Parametri opzionali
+
+- `keep_boundaries=False`: Include token di confine parola
+- `diac_w=0.1`: Peso per differenze diacritiche (0.0-1.0)
+
+## 💡 Esempi pratici
+
+### Esempio base: confronto dialettale
+
+```python
+from phonetic_distance import phon_similarity_normalized
+
+# Esempi di varianti dialettali italiane
+varianti = [
+    ('casa', 'kasa'),      # c/k
+    ('chiesa', 'chjesa'),  # ie/je  
+    ('gatto', 'gàtto'),    # accento
+    ('bello', 'bellu'),    # o/u finale
+]
+
+for v1, v2 in varianti:
+    sim = phon_similarity_normalized(v1, v2)
+    print(f"{v1:8} vs {v2:8} → {sim:.3f}")
+```
+
+### Esempio avanzato: gestione varianti multiple
+
+```python
+from phonetic_distance import concept_similarity_normalized
+
+# Celle con più varianti (tipico nei database dialettali)
+esempi = [
+    ("pane/pàn", "pan"),
+    ("chiesa/chjesa", "chiesa"),  
+    ("casa/kasa", "casa"),
+    ("bello/bellu/beddu", "bello")
+]
+
+for cella1, cella2 in esempi:
+    sim = concept_similarity_normalized(cella1, cella2)
+    print(f"{cella1:15} vs {cella2:8} → {sim:.3f}")
+```
+
+### Esempio: analisi corpus dialettale
+
+```python
+from phonetic_distance import concept_similarity_normalized
+
+def trova_varianti_simili(forme, soglia=0.8):
+    """Trova coppie di forme con alta similarità."""
+    risultati = []
+    
+    for i, forma1 in enumerate(forme):
+        for forma2 in forme[i+1:]:
+            sim = concept_similarity_normalized(forma1, forma2)
+            if sim >= soglia:
+                risultati.append((forma1, forma2, sim))
+    
+    return sorted(risultati, key=lambda x: x[2], reverse=True)
+
+# Esempio con forme dialettali
+corpus = [
+    "casa", "kasa", "koza", 
+    "gatto", "gàtto", "gattu",
+    "chiesa", "chjesa", "ghiesa"
+]
+
+varianti = trova_varianti_simili(corpus, soglia=0.85)
+for v1, v2, sim in varianti:
+    print(f"{v1} ≈ {v2} ({sim:.3f})")
+```
+
+## 🏗️ Struttura del progetto
+
+```
+phonetic-distance/
+├── phonetic_distance/          # Package principale
+│   ├── __init__.py            # Esporta API pubblica
+│   └── core.py                # Implementazione algoritmi
+├── examples/
+│   └── usage.py               # Esempi di utilizzo
+├── tests/                     # Test suite
+│   ├── conftest.py           
+│   └── test_similarity.py     
+├── data/
+│   └── dictionary.txt         # Dizionario forme
+├── scripts/
+│   └── update_dictionary.py   # Gestione dizionario
+├── wd.py                      # Compatibilità legacy
+├── pyproject.toml            # Configurazione package
+├── requirements.txt          # Dipendenze (vuoto)
+└── README.md                 # Questa documentazione
+```
+
+## 🔬 Come funziona
+
+### 1. Tokenizzazione NFD
+Le stringhe sono normalizzate in NFD (Normalized Form Decomposed), separando caratteri base da diacritici:
+
+```python
+"gàtto" → [('g',∅), ('a',{̀}), ('t',∅), ('t',∅), ('o',∅)]
+```
+
+### 2. Costi basati su feature
+I costi di sostituzione considerano caratteristiche fonetiche:
+- **Vocali**: apertura, anteriorità, arrotondamento
+- **Consonanti**: luogo, modo, voce
+
+### 3. Gestione diacritici
+Differenze diacritiche hanno penalità ridotte (default 0.1).
+
+### 4. Normalizzazione
+La distanza viene normalizzata per la lunghezza massima delle sequenze.
+
+## 🧪 Test
+
+Esegui i test per verificare l'installazione:
+
+```bash
+cd phonetic-distance
+python -m pytest tests/ -v
+```
+
+Oppure test rapido:
+
+```bash
+python examples/usage.py
+```
+
+## 🛠️ Estendere la libreria
+
+### Aggiungere nuove basi fonetiche
+
+Modifica `BASE_FEATS` in [`phonetic_distance/core.py`](phonetic_distance/core.py):
+
+```python
+BASE_FEATS = {
+    'a': {'vowel', 'open', 'central'},
+    'e': {'vowel', 'mid', 'front'},
+    # Aggiungi qui nuove basi...
+}
+```
+
+### Gestire dizionario
+
+Usa lo script per aggiornare il dizionario:
+
+```bash
+python scripts/update_dictionary.py --add "nuova_forma"
+```
+
+## 📋 Requisiti
+
+- **Python**: 3.8 o superiore
+- **Dipendenze**: Nessuna (solo libreria standard)
+- **Sistema**: Qualsiasi OS (Windows, macOS, Linux)
+
+## 🤝 Contribuire
+
+1. **Segnala problemi** via [GitHub Issues](https://github.com/filippovicidomini/phonetic-distance/issues)
+2. **Proponi miglioramenti** con le Pull Request
+3. **Aggiungi nuove feature fonetiche** seguendo il formato esistente
+4. **Migliora la documentazione** e gli esempi
+
+### Compatibilità legacy
+
+Il modulo `wd.py` mantiene compatibilità con codice precedente:
+
+```python
+import wd  # Deprecation warning ma funziona
+# Equivalente a: import phonetic_distance
+```
+
+## 📄 Licenza
+
+Questo progetto è rilasciato sotto [licenza MIT](LICENSE). Libero per uso commerciale e non commerciale.
+
+## 🚀 Versioni future
+
+- [ ] Supporto per feature prosodiche (tono, stress)
+- [ ] Algoritmi di clustering foneticamente consapevoli  
+- [ ] Export in formati standard (JSON, CSV)
+- [ ] Interfaccia web per confronti rapidi
+- [ ] Modelli pre-addestrati per lingue specifiche
+
+---
+
+**Autore**: Filippo Vicidomini  
+**Versione**: 0.1.0  
+**Homepage**: https://github.com/filippovicidomini/phonetic-distance

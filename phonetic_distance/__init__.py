@@ -1,9 +1,9 @@
 """Package `phonetic_distance` — public API wrapper.
 
-Questo package re-esporta l'implementazione definita in `weighted_distance.py`.
+Questo package re-esporta l'implementazione definita nel modulo core.
 """
 from __future__ import annotations
 
-from weighted_distance import *  # noqa: F401,F403
+from .core import *  # noqa: F401,F403
 
 __all__ = [name for name in dir() if not name.startswith("_")]

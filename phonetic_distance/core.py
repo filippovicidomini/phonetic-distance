@@ -1,12 +1,11 @@
 # -*- coding: utf-8 -*-
 #%%
-"""weighted_distance.py — Weighted phonological Levenshtein distance + normalized similarities.
+"""core.py — Weighted phonological Levenshtein distance + normalized similarities.
 
-Questo modulo è la versione rinominata di `wd.py`. Calcola una distanza edit fonologica tra
-trascrizioni fonetiche/ortografiche usando tokenizzazione NFD, costi di sostituzione basati
-su feature e penalità per diacritici.
+Questo modulo implementa una distanza edit fonologica tra trascrizioni fonetiche/ortografiche 
+usando tokenizzazione NFD, costi di sostituzione basati su feature e penalità per diacritici.
 
-API pubblica (stesse funzioni di `wd.py`):
+API pubblica:
   - tokenize_segments
   - weighted_levenshtein
   - phon_similarity_normalized
