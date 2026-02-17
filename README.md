@@ -219,6 +219,107 @@ Differenze diacritiche hanno penalità ridotte (default 0.1).
 ### 4. Normalizzazione
 La distanza viene normalizzata per la lunghezza massima delle sequenze.
 
+## ⚖️ Sistema di Pesi
+
+La libreria utilizza un sistema di pesi calibrati per riflettere la vicinanza fonologica tra suoni. Di seguito i pesi applicati nei diversi casi:
+
+### Pesi per Diacritici
+
+| Parametro | Valore Default | Descrizione |
+|-----------|----------------|-------------|
+| `diac_w` | **0.1** | Peso per ogni diacritico diverso tra due token |
+
+**Esempio**: `gatto` vs `gàtto` → differenza di 1 diacritico → penalità = 0.1
+
+### Pesi per Inserimento/Cancellazione
+
+| Tipo di Token | Parametro | Costo | Descrizione |
+|---------------|-----------|-------|-------------|
+| Vocale | `vowel_cost` | **1.0** | Inserimento o cancellazione di una vocale |
+| Consonante | `cons_cost` | **1.1** | Inserimento o cancellazione di una consonante |
+| Boundary | `boundary_cost` | **0.2** | Inserimento o cancellazione di un confine parola |
+
+**Razionale**: Le consonanti hanno un costo leggermente superiore perché generalmente più distintive; i boundary hanno costo basso perché meno rilevanti foneticamente.
+
+### Pesi per Sostituzione delle Basi
+
+#### Sostituzioni Speciali
+
+| Caso | Costo | Descrizione |
+|------|-------|-------------|
+| Base identica | **0.0** | Nessuna sostituzione |
+| Vocale ↔ Consonante | **1.3** | Cambio di categoria fonologica |
+| Simboli sconosciuti (stesso tipo) | **0.9** | Entrambi vocali o entrambi consonanti |
+| Simboli sconosciuti (tipo diverso) | **1.3** | Uno vocale, uno consonante |
+| Boundary ↔ Boundary | **0.0** | Confini identici |
+| Boundary ↔ Altro | **0.2** | Sostituzione confine con altro |
+
+#### Sostituzioni tra Vocali
+
+Il costo si calcola sommando le differenze di caratteristiche:
+
+| Caratteristica | Differenza | Penalità |
+|----------------|------------|----------|
+| **Altezza** (apertura) | Diversa | **+0.4** |
+| **Anteriorità** (back/front) | Diversa | **+0.4** |
+| **Arrotondamento** | Diverso | **+0.2** |
+
+**Range totale**: 0.2 - 1.2 (con limite min/max applicato)
+
+**Esempio**:
+- `a` → `e`: differente in altezza (+0.4) e anteriorità (+0.4) = **0.8**
+- `o` → `u`: differente solo in altezza (+0.4) = **0.4**
+- `i` → `ü`: differente solo in arrotondamento (+0.2) = **0.2**
+
+#### Sostituzioni tra Consonanti
+
+Il costo si calcola sommando le differenze di caratteristiche:
+
+| Caratteristica | Differenza | Penalità |
+|----------------|------------|----------|
+| **Voce** (voiced/unvoiced) | Diversa | **+0.2** |
+| **Luogo** di articolazione | Diverso | **+0.4** |
+| **Modo** di articolazione | Diverso | **+0.6** |
+
+**Range totale**: 0.2 - 1.2 (con limite min/max applicato)
+
+**Esempio**:
+- `p` → `b`: solo voce differente (+0.2) = **0.2**
+- `t` → `k`: solo luogo differente (+0.4) = **0.4**
+- `p` → `s`: luogo (+0.4) e modo (+0.6) differenti = **1.0**
+- `t` → `d`: solo voce differente (+0.2) = **0.2**
+
+### Personalizzazione dei Pesi
+
+Tutti i pesi possono essere personalizzati nelle funzioni:
+
+```python
+from phonetic_distance import weighted_levenshtein, tokenize_segments
+
+tokens1 = tokenize_segments('casa')
+tokens2 = tokenize_segments('kasa')
+
+# Pesi personalizzati
+distanza = weighted_levenshtein(
+    tokens1, 
+    tokens2,
+    diac_w=0.2,          # Diacritici più pesanti
+    vowel_cost=0.8,      # Vocali meno costose
+    cons_cost=1.2,       # Consonanti più costose
+    boundary_cost=0.1    # Boundary ancora meno rilevanti
+)
+```
+
+### Matrice di Similarità: Esempi Pratici
+
+| Confronto | Differenza | Distanza | Similarità |
+|-----------|------------|----------|------------|
+| `gatto` vs `gatto` | Identici | 0.0 | 1.00 |
+| `gatto` vs `gàtto` | 1 diacritico | 0.1 | 0.98 |
+| `casa` vs `kasa` | c→k (luogo) | ~0.4 | ~0.90 |
+| `pane` vs `pani` | e→i (altezza+back) | ~0.8 | ~0.80 |
+| `gatto` vs `mare` | Molto diversi | >3.0 | <0.40 |
+
 ## 🧪 Test
 
 Esegui i test per verificare l'installazione:
