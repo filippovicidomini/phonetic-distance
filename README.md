@@ -19,6 +19,23 @@ Questo progetto implementa una versione avanzata dell'algoritmo di distanza di L
 ### 🎯 Caso d'uso tipico
 Quando si confrontano forme dialettali come `"gatto"` vs `"gàtto"`, una distanza di Levenshtein tradizionale le considererebbe molto diverse. Questa libreria riconosce che la differenza è solo un accento e assegna una similarità molto alta (0.98).
 
+## Indice
+
+- [Panoramica](#panoramica)
+- [Installazione rapida](#installazione-rapida)
+- [API Reference](#api-reference)
+- [Esempi pratici](#esempi-pratici)
+- [Struttura del progetto](#struttura-del-progetto)
+- [Come funziona](#come-funziona)
+- [Simboli conosciuti e interpretazione](#simboli-conosciuti-e-interpretazione)
+- [Sistema di Pesi](#sistema-di-pesi)
+- [Test](#test)
+- [Analisi dei Tempi di Calcolo](#analisi-dei-tempi-di-calcolo)
+- [Complessità Computazionale](#complessit%C3%A0-computazionale)
+- [Estendere la libreria](#estendere-la-libreria)
+- [Contribuire](#contribuire)
+- [Licenza](#licenza)
+
 ## 🚀 Installazione rapida
 
 Questo progetto è pubblicato su PyPI e funziona con Python 3.8+.
@@ -525,7 +542,7 @@ Usa lo script per aggiornare il dizionario:
 python scripts/update_dictionary.py --add "nuova_forma"
 ```
 
-**Analisi della Complessità Computazionale (dettagliata)**
+## ⚖️ Complessità Computazionale
 
 Di seguito una versione rivista e più precisa della complessità, con esempi numerici riferiti al dataset ALM usato negli script.
 
@@ -585,6 +602,8 @@ Di seguito una versione rivista e più precisa della complessità, con esempi nu
     - `concept_similarity_normalized`: O(A * B * L^2) (più costo di tokenizzazione; riducibile con caching)
 
 Questa versione della sezione sostituisce la precedente con numeri e formule rivisti e un esempio numerico concreto per il dataset ALM.
+
+
 **Glossario (acronimi e termini usati)**
 
 - **DP**: "dynamic programming" — tecnica che risolve problemi suddividendoli in sottoproblemi sovrapposti e riutilizzando i risultati (memoizzazione). Nel Levenshtein pesato si usa una matrice D con ricorrenza
