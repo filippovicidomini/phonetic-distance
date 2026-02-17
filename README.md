@@ -3,7 +3,7 @@
 [![Python Version](https://img.shields.io/badge/python-3.8+-blue.svg)](https://python.org)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![PyPI version](https://img.shields.io/pypi/v/phonetic-distance.svg)](https://pypi.org/project/phonetic-distance/)
-$10^4$
+
 **Una libreria Python avanzata per il calcolo di distanze fonetiche pesate, specificamente progettata per l'analisi di forme dialettali e variazioni linguistiche.**
 
 ## 📖 Panoramica
@@ -488,7 +488,7 @@ il mare agitato, grosso | 12,720 confronti | 0.000319s media
 
 ### Note sulla performance
 
-- **Per concetto**: ~13,500 confronti $(165×164)/2$
+- **Per concetto**: ~13,500 confronti $$\frac{165\cdot 164}{2}$$
 - **Tempo/confronto**: 0.0001s - 0.0005s a seconda della lunghezza
 - **Salvataggio periodico**: Ogni 50 concetti (configurabile) — puoi interrompere con `Ctrl+C` senza perdere dati
 - **Ripresa**: Usa `--start N` per continuare da un indice precedente
@@ -555,32 +555,32 @@ Di seguito una versione rivista e più precisa della complessità, con esempi nu
     - K: numero di concetti
 
 - Tokenizzazione (`tokenize_segments`)
-    - Tempo: O(n) (scorre la stringa una sola volta; match multibase con lista di dimensione costante)
-    - Spazio: O(t)
+    - Tempo: $$O(n)$$ (scorre la stringa una sola volta; match multibase con lista di dimensione costante)
+    - Spazio: $$O(t)$$
     - Nota: `normalize_nfd` è cached (`lru_cache`) — conviene pre-tokenizzare varianti ripetute.
 
 - Operazioni elementari
-    - `base_cost`, `diac_cost`, `ins_del_cost`, `sub_cost` sono O(1) (lookup + poche operazioni aritmetiche).
+    - `base_cost`, `diac_cost`, `ins_del_cost`, `sub_cost` sono $$O(1)$$ (lookup + poche operazioni aritmetiche).
 
 - Weighted Levenshtein (DP)
-    - Tempo per coppia: O(t_a * t_b) dove t_a, t_b sono i token delle due forme confrontate.
-    - Spazio: O(min(t_a, t_b)) nella nostra implementazione che mantiene solo due righe DP.
+    - Tempo per coppia: $$O(t_a\cdot t_b)$$ dove $t_a, t_b$ sono i token delle due forme confrontate.
+    - Spazio: $$O\big(\min(t_a, t_b)\big)$$ nella nostra implementazione che mantiene solo due righe DP.
     - Ottimizzazioni pratiche: early‑abandon (soglia), banded DP (se le sequenze sono simili), caching dei token.
 
 - `phon_similarity_normalized`
-    - Esegue tokenizzazione + DP → complessità dominata da O(t_a * t_b).
+    - Esegue tokenizzazione + DP → complessità dominata da $$O(t_a\cdot t_b).$$
 
 - `concept_similarity_normalized`
     - Con A varianti in `cell_a` e B in `cell_b` il costo è
-        O(sum_{i=1..A} sum_{j=1..B} t_{a,i} * t_{b,j}) più il costo di tokenizzazione.
-    - Se si assume una lunghezza tipica L per variante, il costo è approssimabile con O(A * B * L^2).
-    - Riduzione pratica: pre-tokenizzare tutte le varianti (una tantum) riduce l'overhead di tokenizzazione; il costo rimane il numero di coppie A×B moltiplicato dal costo DP per coppia.
+        $$O\Big(\sum_{i=1}^A \sum_{j=1}^B t_{a,i}\,t_{b,j}\Big)$$ più il costo di tokenizzazione.
+    - Se si assume una lunghezza tipica $L$ per variante, il costo è approssimabile con $$O(A\cdot B\cdot L^2).$$
+    - Riduzione pratica: pre-tokenizzare tutte le varianti (una tantum) riduce l'overhead di tokenizzazione; il costo rimane il numero di coppie $$A\times B$$ moltiplicato dal costo DP per coppia.
 
 - Confronti su intero corpus
-    - Confronti pairwise naïf su M elementi: O(M^2 * L^2). Per dataset grandi ciò diventa proibitivo.
+    - Confronti pairwise naïf su $M$ elementi: $$O(M^2\cdot L^2).$$ Per dataset grandi ciò diventa proibitivo.
     - Nel caso specifico degli script che confrontano le feature per concetto (approccio usato qui):
-        - Per concetto si confrontano le C città tra loro: numero di confronti per concetto = C * (C - 1) / 2.
-        - Complessivamente, con K concetti: totale confronti ≈ K * C * (C - 1) / 2.
+        - Per concetto si confrontano le C città tra loro: numero di confronti per concetto = $$\frac{C(C-1)}{2}$$.
+        - Complessivamente, con K concetti: totale confronti $$\approx K\cdot \frac{C(C-1)}{2}$$.
         - Esempio numerico (dataset ALM usato negli script): C ≈ 164–165, K = 369 →
             - Per concetto ≈ 13.3k confronti (es. 164→13,366 ; 165→13,530)
             - Su tutti i concetti ≈ 4.9M–5.0M confronti (≈ 4,992,570 usando C=165,K=369)
@@ -596,10 +596,10 @@ Di seguito una versione rivista e più precisa della complessità, con esempi nu
         - Se serve maggior velocità, implementare il nucleo `weighted_levenshtein` in C/Cython/Numba.
 
 - Riepilogo (complessità principali)
-    - Tokenizzazione: O(n) tempo, O(t) spazio
-    - Weighted Levenshtein (per coppia): O(t_a * t_b) tempo, O(min(t_a, t_b)) spazio
-    - `phon_similarity_normalized`: O(t_a * t_b)
-    - `concept_similarity_normalized`: O(A * B * L^2) (più costo di tokenizzazione; riducibile con caching)
+    - Tokenizzazione: $$O(n)$$ tempo, $$O(t)$$ spazio
+    - Weighted Levenshtein (per coppia): $$O(t_a\cdot t_b)$$ tempo, $$O\big(\min(t_a, t_b)\big)$$ spazio
+    - `phon_similarity_normalized`: $$O(t_a\cdot t_b)$$
+    - `concept_similarity_normalized`: $$O(A\cdot B\cdot L^2)$$ (più costo di tokenizzazione; riducibile con caching)
 
 Questa versione della sezione sostituisce la precedente con numeri e formule rivisti e un esempio numerico concreto per il dataset ALM.
 
@@ -607,16 +607,18 @@ Questa versione della sezione sostituisce la precedente con numeri e formule riv
 **Glossario (acronimi e termini usati)**
 
 - **DP**: "dynamic programming" — tecnica che risolve problemi suddividendoli in sottoproblemi sovrapposti e riutilizzando i risultati (memoizzazione). Nel Levenshtein pesato si usa una matrice D con ricorrenza
-    D[i,j] = min(D[i-1,j] + costo_delete,
-                             D[i,j-1] + costo_insert,
-                             D[i-1,j-1] + costo_substitution).
+    $$
+    D[i,j] = \min\Bigl( D[i-1,j] + \text{costo\_delete},\quad
+                        D[i,j-1] + \text{costo\_insert},\quad
+                        D[i-1,j-1] + \text{costo\_substitution} \Bigr)
+    $$
     L'implementazione del pacchetto mantiene solo due righe (`prev`, `cur`) per ridurre l'uso di memoria.
 
 - **LRU (least recently used)**: strategia di caching che elimina l'elemento meno recentemente usato. Python fornisce `functools.lru_cache` per memoizzare funzioni (es. `normalize_nfd`).
 
 - **NFD (Normalization Form Decomposed)**: forma Unicode che scompone caratteri composti in base + segni diacritici; utile per tokenizzare e confrontare diacritici separatamente.
 
-- **O(...) (Big‑O)**: notazione asintotica che descrive la crescita del tempo o spazio in funzione della dimensione dell'input (es. O(n), O(n*m)).
+- **O(...) (Big‑O)**: notazione asintotica che descrive la crescita del tempo o spazio in funzione della dimensione dell'input (es. $$O(n)$$, $$O(n\cdot m)$$).
 
 - **LSH (locality‑sensitive hashing)**: tecnica per indicizzare vettori o insiemi in modo che elementi simili abbiano elevata probabilità di collisione; utile per ridurre i candidati prima del confronto costoso.
 
@@ -630,7 +632,7 @@ Questa versione della sezione sostituisce la precedente con numeri e formule riv
 
 - **Early‑abandon**: strategia per interrompere precocemente la DP su una coppia se il costo corrente supera una soglia stabilita (utile quando interessano solo coppie con similarità ≥ soglia).
 
-- **Banded DP**: limitare la DP a una banda di ampiezza k intorno alla diagonale quando si presume che le sequenze siano simili; riduce complessità a O(k * L).
+- **Banded DP**: limitare la DP a una banda di ampiezza $k$ intorno alla diagonale quando si presume che le sequenze siano simili; riduce complessità a $$O(k\cdot L)$$.
 
 
 
