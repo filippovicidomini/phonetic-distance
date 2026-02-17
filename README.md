@@ -377,6 +377,132 @@ Oppure test rapido:
 python examples/usage.py
 ```
 
+## ⏱️ Analisi dei Tempi di Calcolo
+
+Questo progetto include strumenti dedicati per misurare e analizzare i tempi di calcolo della similarità fonologica, specialmente utili per benchmark su dataset dialettali come ALM123.
+
+### Strumenti disponibili
+
+#### 1. **Script Principale**: `scripts/analyze_computation_times.py`
+
+Analizza i tempi di similarità tra le features di ciascun concetto (165 città → 165 features per concetto).
+
+**Utilizzo rapido**:
+```bash
+# Test con 10 concetti (~30 secondi)
+python scripts/analyze_computation_times.py --concepts 10
+
+# Analisi completa su 369 concetti (~13 minuti)
+python scripts/analyze_computation_times.py
+
+# Con opzioni personalizzate
+python scripts/analyze_computation_times.py \
+  --concepts 100 \
+  --output results/custom_analysis.csv \
+  --save-every 25
+```
+
+**Parametri**:
+- `--csv PATH`: File CSV input (default: `scripts/ALM123.csv`)
+- `--output PATH`: File CSV output (default: `scripts/computation_times_analysis.csv`)
+- `--concepts N`: Numero di concetti (default: tutti 369)
+- `--start N`: Indice iniziale (default: 0)
+- `--save-every N`: Salva ogni N concetti (default: 50)
+
+#### 2. **Script Helper**: `scripts/run_analysis.py`
+
+Fornisce preset predefiniti per facilitare l'esecuzione:
+
+```bash
+python scripts/run_analysis.py test      # 10 concetti
+python scripts/run_analysis.py small     # 100 concetti
+python scripts/run_analysis.py medium    # 200 concetti
+python scripts/run_analysis.py full      # 369 concetti (completo)
+
+# Personalizzato
+python scripts/run_analysis.py custom --concepts 50 --start 100
+```
+
+### Output generato
+
+Lo script genera due file:
+
+1. **`computation_times_analysis.csv`** — Dati dettagliati per ogni concetto:
+   - Indice e nome concetto
+   - Numero di confronti effettuati
+   - Statistiche: media, mediana, min/max, percentili (p25, p75, p95)
+   - Deviazione standard e tempo totale
+
+2. **`computation_times_summary.txt`** — Riepilogo esecutivo con:
+   - Numero di concetti elaborati
+   - Tempo totale di esecuzione
+   - Statistiche aggregate sui tempi medi
+   - Velocità media (confronti/sec)
+
+### Risultati tipici
+
+**Esempio con 10 concetti**:
+```
+Concetti elaborati: 10
+Tempo totale: 30.79 secondi
+
+STATISTICHE:
+  - Velocità media: 3,999 confronti/sec
+  - Confronti totali: 123,130
+  
+Tempi medi per concetto:
+  - Media: 0.000253s per confronto
+  - Min: 0.000078s (il mare)
+  - Max: 0.000347s (fuori c'è mare)
+  
+Percentili:
+  - P25: 0.000209s
+  - P75: 0.000313s
+  - P95: 0.000337s
+```
+
+**Analisi per concetto**:
+```
+il mare                 | 13,366 confronti | 0.000078s media
+l'alto mare             | 12,720 confronti | 0.000185s media
+il mare calmo           | 13,366 confronti | 0.000262s media
+il mare agitato, grosso | 12,720 confronti | 0.000319s media
+```
+
+### Note sulla performance
+
+- **Per concetto**: ~13,500 confronti (165×164)/2
+- **Tempo/confronto**: 0.0001s - 0.0005s a seconda della lunghezza
+- **Salvataggio periodico**: Ogni 50 concetti (configurabile) — puoi interrompere con `Ctrl+C` senza perdere dati
+- **Ripresa**: Usa `--start N` per continuare da un indice precedente
+
+### 📊 Grafici e Visualizzazione 
+
+I dati CSV generati sono pronti per essere visualizzati. Le versioni future includeranno:
+- Grafici dei tempi per concetto
+- Distribuzione dei tempi di calcolo
+- Analisi della velocità
+- Confronti di performance tra dataset
+
+Nel frattempo, puoi analizzare i dati con Python:
+
+```python
+import pandas as pd
+import matplotlib.pyplot as plt
+
+df = pd.read_csv('scripts/computation_times_analysis.csv')
+
+# Concetti più lenti
+print(df.nlargest(10, 'mean')[['concept_name', 'mean', 'max']])
+
+# Distribuzione dei tempi
+fig, axes = plt.subplots(1, 2, figsize=(12, 5))
+df['mean'].hist(bins=30, ax=axes[0], title='Distribuzione Tempi Medi')
+df['max'].hist(bins=30, ax=axes[1], title='Distribuzione Tempi Max')
+plt.tight_layout()
+plt.savefig('timing_analysis.png', dpi=150)
+```
+
 ## 🛠️ Estendere la libreria
 
 ### Aggiungere nuove basi fonetiche
@@ -398,6 +524,96 @@ Usa lo script per aggiornare il dizionario:
 ```bash
 python scripts/update_dictionary.py --add "nuova_forma"
 ```
+
+**Analisi della Complessità Computazionale (dettagliata)**
+
+Di seguito una versione rivista e più precisa della complessità, con esempi numerici riferiti al dataset ALM usato negli script.
+
+- Notazione
+    - n: lunghezza in caratteri di una stringa
+    - t: numero di token prodotti da `tokenize_segments` (t ≤ n)
+    - L: lunghezza tipica in token di una variante (valore medio)
+    - A, B: numero di varianti in due celle (per `concept_similarity_normalized`)
+    - C: numero di città (feature per concetto)
+    - K: numero di concetti
+
+- Tokenizzazione (`tokenize_segments`)
+    - Tempo: O(n) (scorre la stringa una sola volta; match multibase con lista di dimensione costante)
+    - Spazio: O(t)
+    - Nota: `normalize_nfd` è cached (`lru_cache`) — conviene pre-tokenizzare varianti ripetute.
+
+- Operazioni elementari
+    - `base_cost`, `diac_cost`, `ins_del_cost`, `sub_cost` sono O(1) (lookup + poche operazioni aritmetiche).
+
+- Weighted Levenshtein (DP)
+    - Tempo per coppia: O(t_a * t_b) dove t_a, t_b sono i token delle due forme confrontate.
+    - Spazio: O(min(t_a, t_b)) nella nostra implementazione che mantiene solo due righe DP.
+    - Ottimizzazioni pratiche: early‑abandon (soglia), banded DP (se le sequenze sono simili), caching dei token.
+
+- `phon_similarity_normalized`
+    - Esegue tokenizzazione + DP → complessità dominata da O(t_a * t_b).
+
+- `concept_similarity_normalized`
+    - Con A varianti in `cell_a` e B in `cell_b` il costo è
+        O(sum_{i=1..A} sum_{j=1..B} t_{a,i} * t_{b,j}) più il costo di tokenizzazione.
+    - Se si assume una lunghezza tipica L per variante, il costo è approssimabile con O(A * B * L^2).
+    - Riduzione pratica: pre-tokenizzare tutte le varianti (una tantum) riduce l'overhead di tokenizzazione; il costo rimane il numero di coppie A×B moltiplicato dal costo DP per coppia.
+
+- Confronti su intero corpus
+    - Confronti pairwise naïf su M elementi: O(M^2 * L^2). Per dataset grandi ciò diventa proibitivo.
+    - Nel caso specifico degli script che confrontano le feature per concetto (approccio usato qui):
+        - Per concetto si confrontano le C città tra loro: numero di confronti per concetto = C * (C - 1) / 2.
+        - Complessivamente, con K concetti: totale confronti ≈ K * C * (C - 1) / 2.
+        - Esempio numerico (dataset ALM usato negli script): C ≈ 164–165, K = 369 →
+            - Per concetto ≈ 13.3k confronti (es. 164→13,366 ; 165→13,530)
+            - Su tutti i concetti ≈ 4.9M–5.0M confronti (≈ 4,992,570 usando C=165,K=369)
+        - Questo numero di confronti è ragionevole da processare in pochi minuti su hardware moderno se il tempo per confronto è nell'ordine dei 10^-4–10^-3 s (come mostrato dai benchmark locali).
+
+- Stime temporali e suggerimenti pratici
+    - Se il tempo medio per confronto è ~0.0002–0.0003 s, allora 5M confronti richiedono ~1,000–1,500 s (≈ 16–25 minuti). La variabilità dipende dalla lunghezza media delle varianti e dall'overhead di tokenizzazione.
+    - Consigli per velocizzare:
+        - Pre-tokenizzare tutte le varianti e riutilizzare i token (cache in memoria o su disco).
+        - Parallelizzare per concetto (i concetti sono indipendenti: embarrassingly parallel).
+        - Applicare filtri rapidi (lunghezza, n‑gram overlap) prima di eseguire DP.
+        - Usare banded DP o early‑abandon quando possibile.
+        - Se serve maggior velocità, implementare il nucleo `weighted_levenshtein` in C/Cython/Numba.
+
+- Riepilogo (complessità principali)
+    - Tokenizzazione: O(n) tempo, O(t) spazio
+    - Weighted Levenshtein (per coppia): O(t_a * t_b) tempo, O(min(t_a, t_b)) spazio
+    - `phon_similarity_normalized`: O(t_a * t_b)
+    - `concept_similarity_normalized`: O(A * B * L^2) (più costo di tokenizzazione; riducibile con caching)
+
+Questa versione della sezione sostituisce la precedente con numeri e formule rivisti e un esempio numerico concreto per il dataset ALM.
+**Glossario (acronimi e termini usati)**
+
+- **DP**: "dynamic programming" — tecnica che risolve problemi suddividendoli in sottoproblemi sovrapposti e riutilizzando i risultati (memoizzazione). Nel Levenshtein pesato si usa una matrice D con ricorrenza
+    D[i,j] = min(D[i-1,j] + costo_delete,
+                             D[i,j-1] + costo_insert,
+                             D[i-1,j-1] + costo_substitution).
+    L'implementazione del pacchetto mantiene solo due righe (`prev`, `cur`) per ridurre l'uso di memoria.
+
+- **LRU (least recently used)**: strategia di caching che elimina l'elemento meno recentemente usato. Python fornisce `functools.lru_cache` per memoizzare funzioni (es. `normalize_nfd`).
+
+- **NFD (Normalization Form Decomposed)**: forma Unicode che scompone caratteri composti in base + segni diacritici; utile per tokenizzare e confrontare diacritici separatamente.
+
+- **O(...) (Big‑O)**: notazione asintotica che descrive la crescita del tempo o spazio in funzione della dimensione dell'input (es. O(n), O(n*m)).
+
+- **LSH (locality‑sensitive hashing)**: tecnica per indicizzare vettori o insiemi in modo che elementi simili abbiano elevata probabilità di collisione; utile per ridurre i candidati prima del confronto costoso.
+
+- **ANN (approximate nearest neighbors)**: metodi per trovare vicini approssimati in grandi insiemi più velocemente del confronto esaustivo (es. usando LSH, HNSW).
+
+- **BK‑tree (Burkhard–Keller tree)**: struttura dati per metriche discrete (come distanza edit) che permette di cercare elementi entro una certa distanza in modo efficiente.
+
+- **MinHash**: algoritmo per stimare la similarità di Jaccard tra insiemi (es. n‑gram); usato con LSH per recupero approssimato di coppie simili.
+
+- **API**: application programming interface — insieme di funzioni/esportazioni che il pacchetto fornisce (`tokenize_segments`, `weighted_levenshtein`, `phon_similarity_normalized`, ...).
+
+- **Early‑abandon**: strategia per interrompere precocemente la DP su una coppia se il costo corrente supera una soglia stabilita (utile quando interessano solo coppie con similarità ≥ soglia).
+
+- **Banded DP**: limitare la DP a una banda di ampiezza k intorno alla diagonale quando si presume che le sequenze siano simili; riduce complessità a O(k * L).
+
+
 
 ## 📋 Requisiti
 

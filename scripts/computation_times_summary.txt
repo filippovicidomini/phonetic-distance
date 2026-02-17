@@ -1,0 +1,23 @@
+ANALISI TEMPI DI CALCOLO DELLA SIMILARITÀ FONOLOGICA
+======================================================================
+
+Esecuzione: ALM123.csv
+Concetti analizzati: 10
+Tempo totale: 31.17s
+Tempo calcolo similarità: 31.11s
+
+STATISTICHE SUI TEMPI MEDI:
+  - Media: 0.00025513s
+  - Mediana: 0.00027585s
+  - Dev.Std: 0.00007926s
+  - Min: 0.00007876s
+  - Max: 0.00034688s
+  - P25: 0.00021004s
+  - P75: 0.00032021s
+  - P95: 0.00033717s
+
+CONFRONTI TOTALI: 123,130
+Velocità media: 3958 confronti/sec
+
+Risultati salvati in:
+  scripts/computation_times_test.csv
