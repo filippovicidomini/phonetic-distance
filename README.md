@@ -3,7 +3,7 @@
 [![Python Version](https://img.shields.io/badge/python-3.8+-blue.svg)](https://python.org)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![PyPI version](https://img.shields.io/pypi/v/phonetic-distance.svg)](https://pypi.org/project/phonetic-distance/)
-
+$10^4$
 **Una libreria Python avanzata per il calcolo di distanze fonetiche pesate, specificamente progettata per l'analisi di forme dialettali e variazioni linguistiche.**
 
 ## 📖 Panoramica
