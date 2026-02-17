@@ -219,6 +219,48 @@ Differenze diacritiche hanno penalità ridotte (default 0.1).
 ### 4. Normalizzazione
 La distanza viene normalizzata per la lunghezza massima delle sequenze.
 
+## 🧾 Simboli conosciuti e interpretazione
+
+La libreria riconosce una serie di simboli base e multi-carattere definiti in `phonetic_distance/core.py`.
+
+- Multi-basi (riconoscimento greedy, in NFD): `g’`, `k’`, `hʼ`, `lʼ`, `nʼ`, `r̥`, `r̄`, `r̃`, `ṙ`.
+
+- Vocali (ogni vocale ha attributi `height` / `back` / `round`):
+
+| Simbolo | Altezza | Anteriorità | Arrotondamento |
+|--------:|:--------|:------------:|:---------------:|
+| a      | open    | central     | 0               |
+| e      | mid     | front       | 0               |
+| ë      | mid     | central     | 0               |
+| i      | close   | front       | 0               |
+| o      | mid     | back        | 1               |
+| u      | close   | back        | 1               |
+| ö      | mid     | front       | 1               |
+| ü      | close   | front       | 1               |
+
+- Semivocali (trattate come consonanti approssimanti): `i̯` (palatal, `approx`, voiced), `u̯` (velar, `approx`, voiced).
+
+- Consonanti: ogni consonante è definita con `place`, `manner` e `voice`. Alcuni esempi:
+
+| Simbolo | Luogo       | Modo     | Voce |
+|--------:|:-----------:|:--------:|:----:|
+| p      | bilabial    | stop     | 0    |
+| b      | bilabial    | stop     | 1    |
+| t      | dental      | stop     | 0    |
+| d      | dental      | stop     | 1    |
+| k      | velar       | stop     | 0    |
+| g      | velar       | stop     | 1    |
+| s      | alveolar    | sibilant | 0    |
+| ʒ      | alveolar    | affric   | 1    |
+| m      | bilabial    | nasal    | 1    |
+| n      | alveolar    | nasal    | 1    |
+| l      | alveolar    | lateral  | 1    |
+| r      | alveolar    | trill    | 1    |
+
+- Fallback per simboli sconosciuti: se un simbolo non è presente in `BASE_FEATS`, viene classificato come vocale se è presente in `_VOWEL_BASES` (`a,e,i,o,u,ë,ö,ü`), altrimenti come consonante. Le sostituzioni che coinvolgono simboli sconosciuti applicano costi moderati (vedi sezione "⚖️ Sistema di Pesi").
+
+Per la lista completa dei simboli e dei relativi attributi, consulta `phonetic_distance/core.py` negli oggetti `BASE_FEATS` e `MULTI_BASES`.
+
 ## ⚖️ Sistema di Pesi
 
 La libreria utilizza un sistema di pesi calibrati per riflettere la vicinanza fonologica tra suoni. Di seguito i pesi applicati nei diversi casi:
