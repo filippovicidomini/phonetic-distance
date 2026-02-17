@@ -488,7 +488,7 @@ il mare agitato, grosso | 12,720 confronti | 0.000319s media
 
 ### Note sulla performance
 
-- **Per concetto**: ~13,500 confronti (165×164)/2
+- **Per concetto**: ~13,500 confronti $(165×164)/2$
 - **Tempo/confronto**: 0.0001s - 0.0005s a seconda della lunghezza
 - **Salvataggio periodico**: Ogni 50 concetti (configurabile) — puoi interrompere con `Ctrl+C` senza perdere dati
 - **Ripresa**: Usa `--start N` per continuare da un indice precedente
